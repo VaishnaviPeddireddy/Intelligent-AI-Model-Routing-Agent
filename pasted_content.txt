@@ -1,0 +1,99 @@
+DigiPower X / NeoCloudz
+MLOps Engineer — Take-Home Exercise
+You will have 3 calendar days to submit your solution.
+Scenario
+NeoCloudz is building a managed AI inference service on NVIDIA GPU infrastructure. Customers will submit
+requests to multiple models running across GPU worker pools. The platform must balance reliable service, latency,
+throughput, tenant fairness, and infrastructure cost.
+Your task is to build a small, local version of this platform, measure its behavior under load and failure, and
+recommend how it should evolve for production. Focus on platform engineering and operational trade-offs; model
+quality is outside the scope of this exercise.
+Implementation
+Information Architecture
+Implement the following request flow. Workers may be logical components within one service or separate
+processes; explain your choice.
+Client → Inference API → Request router → Worker pool → Metrics and usage
+Inference API
+Implement POST /v1/chat/completions, GET /health, GET /ready, GET /workers, and GET /metrics. Accept a model,
+a messages array containing role and content, and max_tokens. Return an inference response; simulated output is
+acceptable.
+Example request
+{"model": "qwen", "messages": [{"role": "user", "content": "Explain Kubernetes in simple terms."}], "max_tokens":
+200}
+Worker Pool
+Create at least three logical workers supporting at least two models, for example worker-1 and worker-2 serving
+qwen, and worker-3 serving llama.
+Expose useful runtime state such as worker_id, model, healthy, active_requests, queue_depth, utilization,
+requests_completed, and requests_failed. GPU utilization may be simulated.
+Request Routing
+Choose a worker using the requested model and worker health. Keep the routing logic clearly identifiable, for
+example select_worker(request, workers). Explain the routing strategy. For additional depth, consider queue
+depth, active requests, utilization, request size, or estimated generation length.
+Reliability and Failure Handling
+Simulate production problems such as an unhealthy worker, slow inference, worker errors, a full queue, or critical
+utilization. Provide a reproducible way to trigger the conditions you demonstrate.
+Implement meaningful handling for selected conditions using health detection, worker exclusion, timeouts,
+bounded retries, backpressure, queue limits, graceful degradation, or HTTP 429/503 responses.
+Show that one unhealthy worker does not bring down the service. Explain behavior when no healthy worker can
+serve the requested model.
+Observability
+Expose total, successful, and failed requests; request latency; active requests; worker health; queue depth; and
+generated tokens. Prometheus-compatible metrics are preferred.
+Assign a unique request or correlation ID to each request. Structured logging is strongly encouraged. Tracing,
+OpenTelemetry, Grafana, and additional metrics are optional.
+Exercise Inputs
+Local Setup
+Create your own sample requests and simulated worker behavior. No external dataset or GPU access is needed. A
+small local model or inference backend such as Ollama, Hugging Face, llama.cpp, vLLM, or SGLang may be used if
+convenient. Clearly identify simulated metrics and token counts.
+Choose One Advanced Feature
+Select one of the options below and provide the solution.
+• Multi-tenancy: support at least two customers using a combination of API key authentication, usage
+separation, quotas, rate limits, or concurrency limits. Explain the production evolution.
+• Token and usage metering: record request ID, customer, model, input/output/total tokens, latency, and
+worker ID. Use SQLite, JSONL, PostgreSQL, or another reasonable store.
+• Autoscaling: implement or demonstrate scaling based on queue depth, request rate, active requests, P95
+latency, utilization, or tokens/sec. HPA, KEDA, or custom-metric configuration is acceptable.
+• Canary model deployment: demonstrate or describe a 90% model-v1 / 10% model-v2 split, monitored metrics,
+rollback conditions, and promotion to 100%.
+Evaluation and Benchmarking
+Functional and Failure Checks
+Provide tests or repeatable commands that demonstrate correct model routing, exclusion of unhealthy workers,
+and the failure-handling behavior you implemented. Include checks for your selected advanced feature where
+applicable.
+Load Test
+Build a utility that sends concurrent requests and run at least one load test at concurrency 8. Testing additional
+concurrency levels (for example 1 and 32) is optional and welcome if time allows, but not required.
+Record the workload, model mix, request count or duration, token settings, machine specifications, and simulated
+worker settings so a reviewer can reproduce the results.
+Summarize the observed bottleneck, how latency and throughput behaved, and what you would optimize next.
+Include a brief observation from a failure scenario and distinguish measured results from production estimates.
+Production Design Discussion
+Come prepared to sketch and discuss, live, how the platform would support approximately 1,000 NVIDIA
+B200/B300 GPUs across multiple Kubernetes clusters, customers, and models. A written architecture document is
+not required — a whiteboard-level diagram and verbal walkthrough in the follow-up discussion is sufficient.
+Deliverables
+Code and Setup
+Submit a Git repository containing the working API, worker pool, router, failure handling, metrics, load utility,
+tests, Dockerfile, Kubernetes manifests, and your selected advanced feature. Include docker-compose.yml if used.
+Keep setup simple enough for another engineer to reproduce.
+• README.md — setup, startup, test and load commands, architecture overview, selected advanced feature,
+key decisions, and known limitations.
+• BENCHMARK.md — measured results, reproducibility details, bottlenecks, and analysis.
+• WHAT_I_WOULD_DO_NEXT.md — priorities, known bugs and limitations, technical debt, deliberate
+omissions, and changes required before production.
+Screen Recording
+Record a walkthrough of no more than 5 minutes, as a quick internal update to the NeoCloudz engineering team.
+Show the architecture, a working request, a failure-handling example, and key benchmark findings. Discuss trade-
+offs, rough edges, and any AI tools used. Share a recording link or an MP4. Keep your camera on for the duration of
+the video.
+Follow Up Discussion
+Be prepared to explain your implementation, routing algorithm, benchmark results, failure handling, AI-assisted
+development process, and changes needed for real B200/B300 infrastructure. This is also where we'll walk through
+the production design discussion (1,000-GPU scaling architecture) together. You may be asked to modify a small
+part of the implementation or respond to a new requirement.
+Example discussion prompts include an unhealthy worker, one customer consuming most capacity, adding another
+model, a 10% canary rollout, a cluster outage, or a sudden doubling of P95 latency.
+Final Guidance
+AI-assisted engineering tools are allowed and encouraged — use them the way you would on the job. We're not
+interested in whether you used AI. We're interested in what you built and whether you understand it.
